@@ -97,6 +97,18 @@ Set your current directory to the helm/ directory:
 ```shell
 cd helm/
 ```
+### Push to Repository
+
+Before deploying the application to a Kubernetes cluster, the Docker image needs to be accessible in a Docker repository. This can be a public repository, like DockerHub, or a private repository like Amazon ECR.
+
+Assuming you have already set up an ECR repository, you can tag and push the Docker image with the following commands:
+
+```shell
+docker tag <your-image-name> <your-ecr-repo-url>:<tag>
+docker push <your-ecr-repo-url>:<tag>
+```
+
+Replace <your-ecr-repo-url> with the URL of your ECR repository and <tag> with a suitable tag for your image.
 
 Install
 Install the Helm chart:
