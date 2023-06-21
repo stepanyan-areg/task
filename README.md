@@ -200,7 +200,7 @@ spec:
       - apiGroups: [""]
         kinds: ["Pod"]
 ```
-Again, apply the constraint enforcement with kubectl apply -f <filename>.
+Again, apply the constraint enforcement with kubectl apply -f "filename"
 
 With these policies in place, Kubernetes will reject any pod that tries to use the default service account or run a container as root. Adjust your pod specifications accordingly to comply with these security best practices.
 
