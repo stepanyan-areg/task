@@ -6,7 +6,6 @@ This is a Node.js application packaged with Docker and Helm, ready for deploymen
 
 The application is a simple Express.js application that responds to HTTP requests. It includes the Prometheus client library to expose the metrics at `/metrics` endpoint. This will increment a counter each time a request is received on the main endpoint ('/').
 
-The application is a simple Express.js application that responds to HTTP requests. It includes the Prometheus client library to expose the metrics at `/metrics` endpoint. This will increment a counter each time a request is received on the main endpoint ('/').
 
 ## Docker
 
