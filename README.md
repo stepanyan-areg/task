@@ -241,9 +241,40 @@ To run the test:
 
 ```shell
 helm test <release-name> -n <namespace>
-
 ```
 You should see a "PASSED" message if the test is successful. If the test fails, you would see a "FAILED" message and some additional information about the error.
+
+### Database Migration Job
+
+The database migration job is defined in the migration-job.yaml file. This job uses a specific Docker image that includes a migration script. When the job runs, it starts a Pod with this image and runs the migration script.
+
+The job is configured to run after the Helm chart is installed, thanks to the post-install Helm hook. If the job completes successfully, Helm will delete it.
+
+```shell
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: myapp-migration-job
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      name: myapp-migration-job
+    spec:
+      containers:
+      - name: myapp-migration
+        image: "{{ .Values.ContainerImageBase }}/{{ .Values.RepositoryName }}:{{ .Values.ContainerTag }}"
+        command: ["/path/to/your/migration/script.sh"]
+      restartPolicy: Never
+```
+
+
+
+
+
 
 
 
