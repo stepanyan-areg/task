@@ -165,7 +165,7 @@ spec:
           msg := sprintf("Container %v is running as root", [container.name])
         }
 ```
-Apply the constraint templates with kubectl apply -f <filename> 
+Apply the constraint templates with kubectl apply -f "filename"
 
 ### Enforcing Constraints
 
