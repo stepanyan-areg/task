@@ -114,9 +114,11 @@ Install
 Install the Helm chart:
 
 ```shell
-helm install <release-name> .
+helm install <release-name> . -n <namespace>
+ 
 ```
 Replace <release-name> with a name for your Helm release.
+Replace <namespace> with a name for your namespace.
 
 Helm Test
 The Helm chart includes a simple test to verify the deployed application. The test simply makes a request to the main endpoint of the application and checks the response.
@@ -124,8 +126,10 @@ The Helm chart includes a simple test to verify the deployed application. The te
 To run the test:
 
 ```shell
-helm test <release-name>
+helm test <release-name> -n <namespace>
+
 ```
 You should see a "PASSED" message if the test is successful. If the test fails, you would see a "FAILED" message and some additional information about the error.
+
 
 
