@@ -92,11 +92,119 @@ Each line represents a separate test from the structure-test.yaml file, and "PAS
 
 ## Deploying the Application
 
-Set your current directory to the helm/ directory:
+### Prerequisites
+
+* A running Kubernetes cluster
+* kubectl and helm installed and configured to interact with your cluster
+
+### Enforce Security Policies with Gatekeeper
+
+Add the Gatekeeper chart repository to your helm client:
 
 ```shell
-cd helm/
+helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
 ```
+
+Install Gatekeeper to your cluster in a chosen namespace:
+
+```shell
+helm install gatekeeper/gatekeeper --generate-name -n <namespace>
+```
+### Applying Constraints
+
+Next, you will apply two custom constraint templates(provided in the source code): "NoUseOfDefaultServiceAccount" and "NoRootContainers".
+
+The NoUseOfDefaultServiceAccount constraint prevents pods from using the default service account:
+
+```shell
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: nouseofdefaultserviceaccount
+spec:
+  crd:
+    spec:
+      names:
+        kind: NoUseOfDefaultServiceAccount
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8siam
+        violation[{"msg": msg}] {
+          input.review.kind.kind == "Pod"
+          input.review.object.spec.serviceAccountName == "default"
+          msg := "usage of the default service account is not allowed"
+        }
+        violation[{"msg": msg}] {
+          input.review.kind.kind == "Pod"
+          not input.review.object.spec.serviceAccountName
+          msg := "usage of the default service account is not allowed"
+        }
+```
+
+The NoRootContainers constraint prevents pods from running containers as root:
+
+```shell
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: norootcontainers
+spec:
+  crd:
+    spec:
+      names:
+        kind: NoRootContainers
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package norootcontainers
+        violation[{"msg": msg}] {
+          input.review.kind.kind == "Pod"
+          container := input.review.object.spec.containers[_]
+          container.securityContext.runAsUser == 0
+          msg := sprintf("Container %v is running as root", [container.name])
+        }
+```
+Apply the constraint templates with kubectl apply -f <filename>.
+
+### Enforcing Constraints
+
+Finally, create constraint objects to enforce the constraint templates you've created:
+
+To enforce NoUseOfDefaultServiceAccount:
+
+```shell
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: NoUseOfDefaultServiceAccount
+metadata:
+  name: deny-default-service-account
+spec:
+  enforcementAction: deny
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+
+```
+
+To enforce NoRootContainers:
+
+```shell
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: NoRootContainers
+metadata:
+  name: pods-must-not-have-root-containers
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+```
+Again, apply the constraint enforcement with kubectl apply -f <filename>.
+
+With these policies in place, Kubernetes will reject any pod that tries to use the default service account or run a container as root. Adjust your pod specifications accordingly to comply with these security best practices.
+
+
 ### Push to Repository
 
 Before deploying the application to a Kubernetes cluster, the Docker image needs to be accessible in a Docker repository. This can be a public repository, like DockerHub, or a private repository like Amazon ECR.
@@ -110,12 +218,18 @@ docker push <your-ecr-repo-url>:<tag>
 
 Replace <your-ecr-repo-url> with the URL of your ECR repository and <tag> with a suitable tag for your image.
 
-Install
+### Install
+
 Install the Helm chart:
+
+Set your current directory to the helm/ directory:
+
+```shell
+cd helm/
+```
 
 ```shell
 helm install <release-name> . -n <namespace>
- 
 ```
 Replace <release-name> with a name for your Helm release.
 Replace <namespace> with a name for your namespace.
